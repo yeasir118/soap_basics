@@ -1,0 +1,23 @@
+@SoapDemo.API_HostAddress = http://localhost:5298
+
+POST {{SoapDemo.API_HostAddress}}/UserService.svc
+Content-Type: text/xml; charset=utf-8
+SOAPAction: "http://soapdemo.com/user-service/v1/IUserSoapService/GetUser"
+
+<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope 
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:usr="http://soapdemo.com/user-service/v1">
+    
+   <soapenv:Header/>
+   
+    <soapenv:Body>
+       <usr:GetUser>
+          <usr:request>
+             <usr:Id>1</usr:Id>
+          </usr:request>
+       </usr:GetUser>
+    </soapenv:Body>
+
+</soapenv:Envelope>
+###
