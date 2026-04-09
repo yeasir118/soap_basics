@@ -50,11 +50,26 @@ public class SoapAuthMiddleware
 
     private static async Task WriteSoapFault(HttpContext context, string message)
     {
+        XNamespace s = "http://schemas.xmlsoap.org/soap/envelope/";
+        var doc = new XDocument(
+            new XElement(s + "Envelope",
+                new XAttribute(XNamespace.Xmlns + "s", s.NamespaceName),
+                new XElement(s + "Body",
+                    new XElement(s + "Fault",
+                        new XElement("faultcode", "s:Sender"),
+                        new XElement("faultstring", message)
+                    )
+                )
+            )
+        );
+
+        var sb = new System.Text.StringBuilder();
+        var settings = new System.Xml.XmlWriterSettings { Indent = true, OmitXmlDeclaration = true };
+        using (var writer = System.Xml.XmlWriter.Create(sb, settings))
+            doc.Save(writer);
+
         context.Response.ContentType = "text/xml; charset=utf-8";
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await context.Response.WriteAsync(
-            $"<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
-            $"<s:Body><s:Fault><faultcode>s:Sender</faultcode><faultstring>{message}</faultstring></s:Fault></s:Body>" +
-            $"</s:Envelope>");
+        await context.Response.WriteAsync(sb.ToString());
     }
 }
