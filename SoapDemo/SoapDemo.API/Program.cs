@@ -3,6 +3,7 @@ using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using SoapCore;
 using SoapDemo.API.Mapping;
+using SoapDemo.API.SOAP.Auth;
 using SoapDemo.API.SOAP.Services;
 using SoapDemo.Application.Interfaces;
 using SoapDemo.Application.Services;
@@ -20,6 +21,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // DI
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
+
+builder.Services.AddHttpContextAccessor();
 
 // Mapster DI
 MapsterConfig.RegisterMappings();
@@ -50,6 +53,11 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.UseWhen(
+    ctx => ctx.Request.Path.StartsWithSegments("/UserService.svc"),
+    branch => branch.UseMiddleware<SoapAuthMiddleware>()
+);
 
 app.UseSoapEndpoint<IUserSoapService>(
     "/UserService.svc",

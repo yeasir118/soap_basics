@@ -7,17 +7,20 @@ SOAPAction: "http://soapdemo.com/user-service/v1/IUserSoapService/GetUser"
 <?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope 
     xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-    xmlns:usr="http://soapdemo.com/user-service/v1">
+    xmlns:usr="http://soapdemo.com/user-service/v1"
+    xmlns:auth="http://soapdemo.com/auth">
     
-   <soapenv:Header/>
+   <soapenv:Header>
+      <auth:ApiKey>super-secret-key</auth:ApiKey>
+   </soapenv:Header>
    
-    <soapenv:Body>
-       <usr:GetUser>
-          <usr:request>
-             <usr:Id>1</usr:Id>
-          </usr:request>
-       </usr:GetUser>
-    </soapenv:Body>
+   <soapenv:Body>
+      <usr:GetUser>
+         <usr:request>
+            <usr:Id>1</usr:Id>
+         </usr:request>
+      </usr:GetUser>
+   </soapenv:Body>
 
 </soapenv:Envelope>
 ###
