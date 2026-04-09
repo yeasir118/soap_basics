@@ -1,6 +1,6 @@
-@SoapWrapper.API_HostAddress = http://localhost:5120
+@SoapWrapper.API_HostAddress = http://localhost:5120/api
 
-GET {{SoapWrapper.API_HostAddress}}/weatherforecast/
+GET {{SoapWrapper.API_HostAddress}}/users/10
 Accept: application/json
 
 ###

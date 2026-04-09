@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using SoapWrapper.API.Middlewares;
 using SoapWrapper.Application.Interfaces;
 using SoapWrapper.Application.Services;
 using SoapWrapper.Infrastructure.SOAP.Config;
@@ -43,6 +44,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapControllers();
 

@@ -1,5 +1,7 @@
 ﻿using SoapWrapper.Application.Entities;
+using SoapWrapper.Application.Exceptions;
 using SoapWrapper.Application.Interfaces;
+using System.ServiceModel;
 
 namespace SoapWrapper.Infrastructure.SOAP.Wrappers;
 
@@ -14,15 +16,34 @@ public class UserSoapWrapper : IUserSoap
 
     public async Task<User?> GetUserByIdAsync(int id)
     {
-        var response = await _client.GetUserAsync(new soapdemo.com.userservice.v1.GetUserRequest
+        try
         {
-            Id = id
-        });
+            var response = await _client.GetUserAsync(new soapdemo.com.userservice.v1.GetUserRequest
+            {
+                Id = id
+            });
 
-        return new User
+            return new User
+            {
+                Id = response.Id,
+                Name = response.Name
+            };
+        }
+        catch (FaultException ex)
         {
-            Id = response.Id,
-            Name = response.Name
-        };
+            throw new ExternalServiceException($"SOAP Fault: {ex.Message}");
+        }
+        catch (TimeoutException ex)
+        {
+            throw new ExternalServiceTimeoutException($"SOAP request timed out");
+        }
+        catch (CommunicationException ex)
+        {
+            throw new ExternalServiceUnavailableException($"SOAP Service unavailable");
+        }
+        catch (Exception ex)
+        {
+            throw new ExternalServiceException("Unexpected SOAP error");
+        }
     }
 }
