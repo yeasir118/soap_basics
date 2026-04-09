@@ -11,8 +11,7 @@ public static class PollyPolicies
     {
         return Policy
             .Handle<TimeoutException>()
-            .Or<CommunicationException>()
-            .Or<FaultException>()
+            .Or<CommunicationException>(ex => ex is not FaultException)
             .WaitAndRetryAsync(
                 retryCount: options.RetryCount,
                 sleepDurationProvider: attempt => 
