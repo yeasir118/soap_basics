@@ -1,7 +1,10 @@
 using Microsoft.Extensions.Options;
+using Polly.Retry;
 using SoapWrapper.API.Middlewares;
 using SoapWrapper.Application.Interfaces;
 using SoapWrapper.Application.Services;
+using SoapWrapper.Infrastructure.Resilience;
+using SoapWrapper.Infrastructure.Resilience.Config;
 using SoapWrapper.Infrastructure.SOAP.Config;
 using SoapWrapper.Infrastructure.SOAP.Wrappers;
 
@@ -12,6 +15,16 @@ var builder = WebApplication.CreateBuilder(args);
 // configuration
 builder.Services.Configure<SoapOptions>(
     builder.Configuration.GetSection("Soap"));
+
+builder.Services.Configure<PollyOptions>(
+    builder.Configuration.GetSection("Polly"));
+
+// Polly Policies
+builder.Services.AddSingleton<AsyncRetryPolicy>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<PollyOptions>>().Value;
+    return PollyPolicies.GetRetryPolicy(options);
+});
 
 // DI
 builder.Services.AddScoped<UserService>();

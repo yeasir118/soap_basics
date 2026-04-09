@@ -1,4 +1,5 @@
-﻿using SoapWrapper.Application.Entities;
+﻿using Polly.Retry;
+using SoapWrapper.Application.Entities;
 using SoapWrapper.Application.Exceptions;
 using SoapWrapper.Application.Interfaces;
 using System.ServiceModel;
@@ -8,19 +9,26 @@ namespace SoapWrapper.Infrastructure.SOAP.Wrappers;
 public class UserSoapWrapper : IUserSoap
 {
     private readonly UserSoapServiceClient _client;
+    private readonly AsyncRetryPolicy _retryPolicy;
 
-    public UserSoapWrapper(UserSoapServiceClient client)
+    public UserSoapWrapper(
+        UserSoapServiceClient client,
+        AsyncRetryPolicy retryPolicy)
     {
         _client = client;
+        _retryPolicy = retryPolicy;
     }
 
     public async Task<User?> GetUserByIdAsync(int id)
     {
         try
         {
-            var response = await _client.GetUserAsync(new soapdemo.com.userservice.v1.GetUserRequest
+            var response = await _retryPolicy.ExecuteAsync(async () =>
             {
-                Id = id
+                return await _client.GetUserAsync(new soapdemo.com.userservice.v1.GetUserRequest
+                {
+                    Id = id
+                });
             });
 
             return new User
