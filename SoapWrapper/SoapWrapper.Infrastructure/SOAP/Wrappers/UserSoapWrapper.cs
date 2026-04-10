@@ -2,7 +2,9 @@
 using SoapWrapper.Application.Entities;
 using SoapWrapper.Application.Exceptions;
 using SoapWrapper.Application.Interfaces;
+using SoapWrapper.Infrastructure.SOAP.Config;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 
 namespace SoapWrapper.Infrastructure.SOAP.Wrappers;
 
@@ -10,32 +12,46 @@ public class UserSoapWrapper : IUserSoap
 {
     private readonly UserSoapServiceClient _client;
     private readonly AsyncRetryPolicy _retryPolicy;
+    private readonly SoapAuthOptions _authOptions;
 
     public UserSoapWrapper(
         UserSoapServiceClient client,
-        AsyncRetryPolicy retryPolicy)
+        AsyncRetryPolicy retryPolicy,
+        SoapAuthOptions authOptions)
     {
         _client = client;
         _retryPolicy = retryPolicy;
+        _authOptions = authOptions;
     }
 
     public async Task<User?> GetUserByIdAsync(int id)
     {
         try
         {
-            var response = await _retryPolicy.ExecuteAsync(async () =>
+            using (new OperationContextScope(_client.InnerChannel))
             {
-                return await _client.GetUserAsync(new soapdemo.com.userservice.v1.GetUserRequest
-                {
-                    Id = id
-                });
-            });
+                var header = MessageHeader.CreateHeader(
+                    "ApiKey",
+                    "http://soapdemo.com/auth",
+                    _authOptions.ApiKey
+                );
 
-            return new User
-            {
-                Id = response.Id,
-                Name = response.Name
-            };
+                OperationContext.Current.OutgoingMessageHeaders.Add(header);
+
+                var response = await _retryPolicy.ExecuteAsync(async () =>
+                {
+                    return await _client.GetUserAsync(new soapdemo.com.userservice.v1.GetUserRequest
+                    {
+                        Id = id
+                    });
+                });
+
+                return new User
+                {
+                    Id = response.Id,
+                    Name = response.Name
+                };
+            }
         }
         catch (FaultException ex)
         {

@@ -19,6 +19,9 @@ builder.Services.Configure<SoapOptions>(
 builder.Services.Configure<PollyOptions>(
     builder.Configuration.GetSection("Polly"));
 
+builder.Services.Configure<SoapAuthOptions>(
+    builder.Configuration.GetSection("SoapAuth"));
+
 // Polly Policies
 builder.Services.AddSingleton<AsyncRetryPolicy>(sp =>
 {
@@ -28,7 +31,14 @@ builder.Services.AddSingleton<AsyncRetryPolicy>(sp =>
 
 // DI
 builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<IUserSoap, UserSoapWrapper>();
+builder.Services.AddScoped<IUserSoap, UserSoapWrapper>(sp =>
+{
+    var client = sp.GetRequiredService<UserSoapServiceClient>();
+    var retryPolicy = sp.GetRequiredService<AsyncRetryPolicy>();
+    var authOptions = sp.GetRequiredService<IOptions<SoapAuthOptions>>().Value;
+
+    return new UserSoapWrapper(client, retryPolicy, authOptions);
+});
 
 builder.Services.AddScoped<UserSoapServiceClient>(sp =>
 {
