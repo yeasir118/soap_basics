@@ -1,4 +1,5 @@
-﻿using Polly.Retry;
+﻿using Polly;
+using Polly.CircuitBreaker;
 using SoapWrapper.Application.Entities;
 using SoapWrapper.Application.Exceptions;
 using SoapWrapper.Application.Interfaces;
@@ -11,12 +12,12 @@ namespace SoapWrapper.Infrastructure.SOAP.Wrappers;
 public class UserSoapWrapper : IUserSoap
 {
     private readonly UserSoapServiceClient _client;
-    private readonly AsyncRetryPolicy _retryPolicy;
+    private readonly IAsyncPolicy _retryPolicy;
     private readonly SoapAuthOptions _authOptions;
 
     public UserSoapWrapper(
         UserSoapServiceClient client,
-        AsyncRetryPolicy retryPolicy,
+        IAsyncPolicy retryPolicy,
         SoapAuthOptions authOptions)
     {
         _client = client;
@@ -52,6 +53,10 @@ public class UserSoapWrapper : IUserSoap
                     Name = response.Name
                 };
             }
+        }
+        catch(BrokenCircuitException ex)
+        {
+            throw new ExternalServiceException($"Circuit open: {ex.Message}");
         }
         catch (FaultException ex)
         {

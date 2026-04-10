@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Polly;
 using Polly.Retry;
 using SoapWrapper.API.Middlewares;
 using SoapWrapper.Application.Interfaces;
@@ -29,12 +30,18 @@ builder.Services.AddSingleton<AsyncRetryPolicy>(sp =>
     return PollyPolicies.GetRetryPolicy(options);
 });
 
+builder.Services.AddSingleton<IAsyncPolicy>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<PollyOptions>>().Value;
+    return PollyPolicies.GetCombinedPolicy(options);
+});
+
 // DI
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IUserSoap, UserSoapWrapper>(sp =>
 {
     var client = sp.GetRequiredService<UserSoapServiceClient>();
-    var retryPolicy = sp.GetRequiredService<AsyncRetryPolicy>();
+    var retryPolicy = sp.GetRequiredService<IAsyncPolicy>();
     var authOptions = sp.GetRequiredService<IOptions<SoapAuthOptions>>().Value;
 
     return new UserSoapWrapper(client, retryPolicy, authOptions);
